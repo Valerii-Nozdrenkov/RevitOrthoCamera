@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>Application RevitOrthoCamera</Name>
+    <Assembly>RevitOrthoCamera.dll</Assembly>
+    <FullClassName>RevitOrthoCamera.App</FullClassName>
+    <ClientId>6F1241BA-F96F-4EE3-9997-3CDCB483C0A6</ClientId>
+    <VendorId>Ortho Camera</VendorId>
+    <VendorDescription></VendorDescription>
+  </AddIn>
+</RevitAddIns>

@@ -1,0 +1,122 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
+      None
+    </ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup>
+    <!-- Sets some Build default Build properties-->
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{408DB18A-CC45-4C65-AEFE-0319FCFB1C7D}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>RevitOrthoCamera</RootNamespace>
+    <AssemblyName>RevitOrthoCamera</AssemblyName>
+    <!-- If you need to target a differet framework then change the one below -->
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <!-- Sets our build style for Debug. Compiles project to Debug Folder and starts revit -->
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <!-- Compile path -->
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <StartAction>Program</StartAction>
+    <!-- Starts Revit 2020 -->
+    <StartProgram>$(ProgramW6432)\Autodesk\Revit 2020\Revit.exe</StartProgram>
+  </PropertyGroup>
+  <!-- Sets our build style for Release. Compiles project to Release Folder and starts revit -->
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <!-- Compile path -->
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <StartAction>Program</StartAction>
+    <!-- Starts Revit 2020 -->
+    <StartProgram>$(ProgramW6432)\Autodesk\Revit 2020\Revit.exe</StartProgram>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- References to include in your project.
+       If you have non standard location for revit you will have to edit the paths -->
+    <Reference Include="RevitAPI">
+      <HintPath>$(ProgramW6432)\Autodesk\Revit 2020\RevitAPI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="RevitAPIUI">
+      <HintPath>$(ProgramW6432)\Autodesk\Revit 2020\RevitAPIUI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="AdWindows">
+      <HintPath>$(ProgramW6432)\Autodesk\Revit 2020\AdWindows.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="PresentationCore">
+      <HintPath>$(ProgramW6432)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2\PresentationCore.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Windows.Forms">
+      <HintPath>$(ProgramW6432)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2\System.Windows.Forms.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Xaml">
+      <HintPath>$(ProgramW6432)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2\System.Xaml.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System" />
+    <!-- References to include in your project.
+         If you have non standard location for revit you will have to edit the paths -->
+  </ItemGroup>
+  <!-- Compile these file on build -->
+  <ItemGroup>
+    <Compile Include="App.cs" />
+    <Compile Include="RestoreCommand.cs" />
+    <Compile Include="SaveCommand.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Copy this file on build. But dont compile -->
+    <Content Include="RevitOrthoCamera.addin" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- These are your Build actions in your project properties. They place your addin file and dll with Revit for use. -->
+  <!-- Your debug build copies to appdata so only you can access it -->
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <PostBuildEvent>if exist "$(AppData)\Autodesk\REVIT\Addins\2020" copy "$(ProjectDir)*.addin" "$(AppData)\Autodesk\REVIT\Addins\2020"
+if exist "$(AppData)\Autodesk\REVIT\Addins\2020" copy "$(ProjectDir)$(OutputPath)*.dll" "$(AppData)\Autodesk\REVIT\Addins\2020"
+if exist "$(AppData)\Autodesk\REVIT\Addins\2020" xcopy "$(ProjectDir)$(OutputPath)Resources"  "$(AppData)\Autodesk\REVIT\Addins\2020\Resources" /Y /I
+    </PostBuildEvent>
+  </PropertyGroup>
+  <!-- Your Release build copies to programdata so all users have access-->
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <PostBuildEvent>if exist "$(ProgramData)\Autodesk\Revit\Addins\2020" copy "$(ProjectDir)*.addin" "$(ProgramData)\Autodesk\Revit\Addins\2020"
+if exist "$(ProgramData)\Autodesk\Revit\Addins\2020" copy "$(ProjectDir)$(OutputPath)*.dll" "$(ProgramData)\Autodesk\Revit\Addins\2020"
+if exist "$(ProgramData)\Autodesk\REVIT\Addins\2020" xcopy "$(ProjectDir)$(OutputPath)Resources"  "$(ProgramData)\Autodesk\REVIT\Addins\2020\Resources" /Y /I
+    </PostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PostBuildEvent>if exist "$(AppData)\Autodesk\REVIT\Addins\2020" copy "$(ProjectDir)*.addin" "$(AppData)\Autodesk\REVIT\Addins\2020"
+if exist "$(AppData)\Autodesk\REVIT\Addins\2020" copy "$(ProjectDir)$(OutputPath)*.dll" "$(AppData)\Autodesk\REVIT\Addins\2020"
+
+</PostBuildEvent>
+  </PropertyGroup>
+  <!-- These are your Clean actions that erase your debug dll to keep it fresh -->
+  <Target Name="Clean">
+    <Delete Files="$(AppData)\Autodesk\REVIT\Addins\2020\RevitOrthoCamera.addin" />
+    <Delete Files="$(AppData)\Autodesk\REVIT\Addins\2020\RevitOrthoCamera.dll" />
+    <RemoveDir Directories="$(AppData)\Autodesk\REVIT\Addins\2020\Resources\" />
+  </Target>
+</Project>
