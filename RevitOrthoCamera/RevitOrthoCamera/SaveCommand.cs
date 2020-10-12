@@ -1,8 +1,9 @@
-using Autodesk.Revit.ApplicationServices;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
-using Autodesk.Revit.UI.Selection;
 
 namespace RevitOrthoCamera
 {
@@ -11,51 +12,75 @@ namespace RevitOrthoCamera
     {
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
-            //set up document space
-            ///each allows you access to seperate methods of RevitAPI
             UIApplication uiapp = commandData.Application;
             UIDocument uidoc = uiapp.ActiveUIDocument;
-            Application app = uiapp.Application;
             Document doc = uidoc.Document;
-            //Transactions-
-            //Transactions must be initiatied to make any changes to Revit Period.
-            //Usings
-            //Wrapping transactions in a using statment is also good practice.
-            //This allows for them to be released by the code when finished.
-            //It will do this automatically if you choose not but isnt a good habit.
-            using (Transaction Trans = new Transaction(doc))
+
+            // Save current 3D view
+            var view3D = doc.ActiveView as View3D;
+
+            if (view3D == null || view3D.IsPerspective)
             {
-                //starts the transcation
-                Trans.Start("Temp Trans");
+                TaskDialog ts = new TaskDialog("Incorrect View selected")
                 {
-                    //try changes and return sucess if completed
-                    //this prevents your code crashing on erros.
-                    //always use try catch statments.
-                    try
-                    {
-                        // prompt user for element
-                        Reference eref = uidoc.Selection.PickObject(ObjectType.Element, "Select an object");
-                        //create a quick prompt
-                        TaskDialog ts = new TaskDialog("Test Dialogue");
-                        //tell it to show the selected elements name
-                        ts.MainContent = doc.GetElement(eref).Name;
-                        //display the dialog
-                        ts.Show();
-                        //commit the changes
-                        Trans.Commit();
-                        //return success
-                        return Result.Succeeded;
-                    }
-                    //catch failures
-                    catch (System.Exception)
-                    {
-                        //undo changes
-                        Trans.RollBack();
-                        //return failed
-                        return Result.Failed;
-                    }
-                }
+                    MainContent = "Please, select 3D Orthographic view."
+                };
+
+                ts.Show();
+                return Result.Succeeded;
             }
+
+            // Get viewOrientation3D
+            ViewOrientation3D viewOrientation3D = view3D.GetOrientation();
+            ForwardDirection = viewOrientation3D.ForwardDirection;
+            UpDirection = viewOrientation3D.UpDirection;
+            var rightDirection = ForwardDirection.CrossProduct(UpDirection);
+            EyePosition = viewOrientation3D.EyePosition;
+
+            IList<UIView> views = uidoc.GetOpenUIViews();
+            UIView currentView = views.FirstOrDefault(t => t.ViewId == view3D.Id);
+
+            //Corners of the active UI view
+            if (currentView == null)
+            {
+                return Result.Succeeded;
+            }
+
+            IList<XYZ> corners = currentView.GetZoomCorners();
+            XYZ corner1 = corners[0];
+            XYZ corner2 = corners[1];
+
+            //center of the UI view
+            double x = (corner1.X + corner2.X) / 2;
+            double y = (corner1.Y + corner2.Y) / 2;
+            double z = (corner1.Z + corner2.Z) / 2;
+            XYZ viewCenter = new XYZ(x, y, z);
+            EyePosition = viewCenter;
+
+            // Calculate diagonal vector
+            XYZ diagVector = corner1 - corner2;
+
+            double height = 0.5 * Math.Abs(diagVector.DotProduct(UpDirection));
+            double width = 0.5 * Math.Abs(diagVector.DotProduct(rightDirection));
+            Scale = Math.Min(height, width);
+
+            TaskDialog ts1 = new TaskDialog("Camera parameters")
+            {
+                MainContent = "Camera parameters have been successfully saved."
+            };
+
+            ts1.Show();
+            return Result.Succeeded;
         }
+
+        // Static variables were used to save Orthographic camera parameters.
+        // These parameters can be serialize and uploaded to server.
+        public static double Scale { get; private set; }
+
+        public static XYZ EyePosition { get; private set; }
+
+        public static XYZ UpDirection { get; private set; }
+
+        public static XYZ ForwardDirection { get; private set; }
     }
 }
