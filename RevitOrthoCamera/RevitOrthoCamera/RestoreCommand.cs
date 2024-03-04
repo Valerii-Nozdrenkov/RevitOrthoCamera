@@ -41,39 +41,21 @@ namespace RevitOrthoCamera
             }
 
             view3D.SetOrientation(orientation);
+            
+            double scale = SaveCommand.Scale;
 
-            using (Transaction Trans = new Transaction(doc))
+            XYZ corner1 = SaveCommand.EyePosition + SaveCommand.UpDirection * scale - uidoc.ActiveView.RightDirection * scale;
+            XYZ corner2 = SaveCommand.EyePosition - SaveCommand.UpDirection * scale + uidoc.ActiveView.RightDirection * scale;
+
+            uidoc.GetOpenUIViews().FirstOrDefault(t => t.ViewId == view3D.Id)?.ZoomAndCenterRectangle(corner2, corner1);
+            uidoc.UpdateAllOpenViews();
+
+            TaskDialog ts = new TaskDialog("View restored")
             {
-                Trans.Start("Restoring camera parameters");
-                {
-                    try
-                    {
-                        view3D.SetOrientation(orientation);
-                        double scale = SaveCommand.Scale;
+                MainContent = "The camera parameters have been successfully restored."
+            };
 
-                        XYZ corner1 = SaveCommand.EyePosition + SaveCommand.UpDirection * scale - uidoc.ActiveView.RightDirection * scale;
-                        XYZ corner2 = SaveCommand.EyePosition - SaveCommand.UpDirection * scale + uidoc.ActiveView.RightDirection * scale;
-
-                        uidoc.GetOpenUIViews().FirstOrDefault(t => t.ViewId == view3D.Id)?.ZoomAndCenterRectangle(corner2, corner1);
-                        uidoc.UpdateAllOpenViews();
-
-                        TaskDialog ts = new TaskDialog("View restored")
-                        {
-                            MainContent = "The camera parameters have been successfully restored."
-                        };
-
-                        ts.Show();
-
-                        Trans.Commit();
-                        return Result.Succeeded;
-                    }
-                    catch (System.Exception)
-                    {
-                        Trans.RollBack();
-                        return Result.Failed;
-                    }
-                }
-            }
+            ts.Show();            
         }
     }
 }
